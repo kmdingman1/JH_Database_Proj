@@ -392,13 +392,17 @@ class HealthcareHub:
         self.show_appointments()
 
     # Patient side view for billing
+    # Have not done yet
     def billing_patient(self, patient_id):
         self.clear_window()
 
+    # Patient side for medications
+    # Not done yet
     def medications_patient(self):
         self.clear_window()
 
     # Patient side view of their billing
+    # Not done yet
     def billing_patient(self):
         self.clear.window()
 
@@ -538,6 +542,7 @@ class HealthcareHub:
         back_btn.grid(row=3, column=0, pady=(20, 0))
 
     # Healthcare Prof's appointments
+    # Not done yet
     def my_appointments_prof(self,healthcare_id):
         self.clear_window()
 
@@ -599,10 +604,11 @@ class HealthcareHub:
         back_btn.grid(row=3, column=0, pady=(20, 0))
 
     # Prof side of scheduling appointment
+    # Not done yet
     def schedule_appointment_prof(self, healthcare_id):
         self.clear_window()
 
-    # healtcare prof side to add new patient
+    # healthcare prof side to add new patient
     def add_patient(self, healthcare_id):
         self.clear_window()
         # Main frame
@@ -696,10 +702,12 @@ class HealthcareHub:
 
 
     # healthcare prof side to search patient
+    # Not done yet
     def search_patient(self,healthcare_id):
         self.clear_window()
 
     # healthcare prof side view of patient billing
+    # not done yet
     def billing_professional(self, healthcare_id):
         self.clear_window()
 
