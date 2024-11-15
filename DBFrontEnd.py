@@ -170,7 +170,7 @@ class HealthcareHub:
                              **self.button_style)
         back_btn.grid(row=0, column=1, padx=10)
 
-    # Log in varifications
+    # Log in validations
     def login_patient(self, patient_id, password):
         # Add your authentication logic here
         # If login successful:
@@ -184,49 +184,48 @@ class HealthcareHub:
     def patient_portal(self, patient_id):
         self.clear_window()
 
-        # Main frame
+        # Main frame with center alignment
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
-        # Configure weights for centering
-        main_frame.grid_rowconfigure(1, weight=1)  # Welcome text row
-        main_frame.grid_rowconfigure(2, weight=1)  # Button frame row
+        # Configure grid weights for centering
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)  # For button frame
         main_frame.grid_columnconfigure(0, weight=1)
 
         # Logo in upper left
         img = Image.open(r"C:\Users\kate\Downloads\download.png")
-        img = img.resize((181, 60))  # Half the original size for corner placement
+        img = img.resize((181, 60))
         photo = ImageTk.PhotoImage(img)
         image_label = ttk.Label(main_frame, image=photo, style='Image.TLabel')
         image_label.image = photo
-        image_label.grid(row=0, column=0, sticky='nw', pady=(0, 10))  # 'nw' means north-west (upper left)
+        image_label.grid(row=0, column=0, sticky='nw', pady=(0, 20))
 
         # Welcome header centered
         ttk.Label(main_frame,
                   text="Welcome to Patient Portal",
-                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 0))
+                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
 
         # Button container centered
         button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
-        button_frame.grid(row=2, column=0)
-
-        # Center buttons in button frame
+        button_frame.grid(row=2, column=0, sticky='n')
         button_frame.grid_columnconfigure(0, weight=1)
 
-        # Portal buttons - make them same width
-        button_width = 25  # Adjust this value as needed
+        # Portal buttons
+        button_width = 25
 
         appointments_btn = tk.Button(button_frame,
                                      text="View or Schedule Appointment",
                                      width=button_width,
                                      command=lambda: self.appointments_patient(patient_id),
                                      **self.button_style)
-        appointments_btn.grid(row=0, column=0, pady=0)
+        appointments_btn.grid(row=0, column=0, pady=5)
 
         view_bill_btn = tk.Button(button_frame,
                                   text="View My Bills",
                                   width=button_width,
-                                  command=lambda: self.show_bills_patient_side(patient_id),
+                                  command=lambda: self.bills_patient(patient_id),
                                   **self.button_style)
         view_bill_btn.grid(row=1, column=0, pady=5)
 
@@ -235,7 +234,7 @@ class HealthcareHub:
                                     width=button_width,
                                     command=lambda: self.medications_patient(),
                                     **self.button_style)
-        medications_btn.grid(row=2, column=0, pady=0)
+        medications_btn.grid(row=2, column=0, pady=5)
 
         # Logout button
         logout_btn = tk.Button(button_frame,
@@ -253,12 +252,16 @@ class HealthcareHub:
 
     # Patient side view for Appointments
     def appointments_patient(self, patient_id):
-        # Main frame
+        self.clear_window()
+
+        # Main frame with center alignment
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
-        # Configure weights for centering
-        main_frame.grid_rowconfigure(1, weight=1)  # Content row
+        # Configure grid weights for centering
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)  # For button frame
         main_frame.grid_columnconfigure(0, weight=1)
 
         # Logo in upper left
@@ -269,32 +272,32 @@ class HealthcareHub:
         image_label.image = photo
         image_label.grid(row=0, column=0, sticky='nw', pady=(0, 20))
 
-        # Welcome header centered
+        # Header centered
         ttk.Label(main_frame,
                   text="View or Schedule Appointment",
-                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 0))
+                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
 
         # Button container centered
         button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
-        button_frame.grid(row=2, column=0)
+        button_frame.grid(row=2, column=0, sticky='n')
         button_frame.grid_columnconfigure(0, weight=1)
 
-        # Appointment buttons
-        button_width = 25  # Wider buttons for appointment options
+        # Buttons
+        button_width = 25
 
         view_appointments_btn = tk.Button(button_frame,
                                           text="View my Upcoming Appointments",
                                           width=button_width,
-                                          command=lambda: self.show_upcoming_appointments_patient(patient_id),
+                                          command=lambda: self.upcoming_appointments_patient(patient_id),
                                           **self.button_style)
-        view_appointments_btn.grid(row=1, column=0, pady=5)
+        view_appointments_btn.grid(row=0, column=0, pady=5)
 
         schedule_appointment_btn = tk.Button(button_frame,
                                              text="Schedule New Appointment",
                                              width=button_width,
-                                             command=lambda: self.schedule_appointments_patient(patient_id),
+                                             command=lambda: self.schedule_appointment_patient(patient_id),
                                              **self.button_style)
-        schedule_appointment_btn.grid(row=2, column=0, pady=5)
+        schedule_appointment_btn.grid(row=1, column=0, pady=5)
 
         # Back button
         back_btn = tk.Button(button_frame,
@@ -302,7 +305,7 @@ class HealthcareHub:
                              width=button_width,
                              command=lambda: self.patient_portal(patient_id),
                              **self.button_style)
-        back_btn.grid(row=3, column=0, pady=(20, 0))
+        back_btn.grid(row=2, column=0, pady=5)
 
     # Patient Side view for scheduling appointments
     def schedule_appointments_patient(self, patient_id):
@@ -388,6 +391,10 @@ class HealthcareHub:
         messagebox.showinfo("Success", "Appointment scheduled successfully!")
         self.show_appointments()
 
+    # Patient side view for billing
+    def billing_patient(self, patient_id):
+        self.clear_window()
+
     def medications_patient(self):
         self.clear_window()
 
@@ -399,44 +406,43 @@ class HealthcareHub:
     def professional_portal(self, healthcare_id):
         self.clear_window()
 
-        # Main frame
+        # Main frame with center alignment
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
-        # Configure weights for centering
-        main_frame.grid_rowconfigure(1, weight=1)  # Welcome text row
-        main_frame.grid_rowconfigure(2, weight=1)  # Button frame row
+        # Configure grid weights for centering
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)  # For button frame
         main_frame.grid_columnconfigure(0, weight=1)
 
         # Logo in upper left
         img = Image.open(r"C:\Users\kate\Downloads\download.png")
-        img = img.resize((181, 60))  # Half the original size for corner placement
+        img = img.resize((181, 60))
         photo = ImageTk.PhotoImage(img)
         image_label = ttk.Label(main_frame, image=photo, style='Image.TLabel')
         image_label.image = photo
-        image_label.grid(row=0, column=0, sticky='nw', pady=(0, 10))  # 'nw' means north-west (upper left)
+        image_label.grid(row=0, column=0, sticky='nw', pady=(0, 20))
 
         # Welcome header centered
         ttk.Label(main_frame,
                   text="Welcome to Professionals Portal",
-                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 0))
+                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
 
         # Button container centered
         button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
-        button_frame.grid(row=2, column=0)
-
-        # Center buttons in button frame
+        button_frame.grid(row=2, column=0, sticky='n')
         button_frame.grid_columnconfigure(0, weight=1)
 
-        # Portal buttons - make them same width
-        button_width = 25  # Adjust this value as needed
+        # Portal buttons
+        button_width = 25
 
         view_appointments_btn = tk.Button(button_frame,
                                           text="View or Schedule Appointment",
                                           width=button_width,
                                           command=lambda: self.appointments_professional(healthcare_id),
                                           **self.button_style)
-        view_appointments_btn.grid(row=0, column=0, pady=0)
+        view_appointments_btn.grid(row=0, column=0, pady=5)
 
         patient_add_btn = tk.Button(button_frame,
                                     text="Add new Patient",
@@ -452,12 +458,12 @@ class HealthcareHub:
                                    **self.button_style)
         search_add_btn.grid(row=2, column=0, pady=5)
 
-        medications_btn = tk.Button(button_frame,
-                                    text="Get Patient Billing Information",
-                                    width=button_width,
-                                    command=lambda: self.medications_patient(),
-                                    **self.button_style)
-        medications_btn.grid(row=3, column=0, pady=0)
+        billing_btn = tk.Button(button_frame,
+                                text="Get Patient Billing Information",
+                                width=button_width,
+                                command=lambda: self.medications_patient(),
+                                **self.button_style)
+        billing_btn.grid(row=3, column=0, pady=5)
 
         # Logout button
         logout_btn = tk.Button(button_frame,
@@ -471,12 +477,14 @@ class HealthcareHub:
     def appointments_professional(self, healthcare_id):
         self.clear_window()
 
-        # Main frame
+        # Main frame with center alignment
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
-        # Configure weights for centering
-        main_frame.grid_rowconfigure(1, weight=1)  # Content row
+        # Configure grid weights for centering
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)
         main_frame.grid_columnconfigure(0, weight=1)
 
         # Logo in upper left
@@ -487,47 +495,47 @@ class HealthcareHub:
         image_label.image = photo
         image_label.grid(row=0, column=0, sticky='nw', pady=(0, 20))
 
-        # Welcome header centered
+        # Header centered
         ttk.Label(main_frame,
-                  text="View or Schedule Appointment",
-                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 0))
+                  text="Appointments",
+                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
 
         # Button container centered
         button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
-        button_frame.grid(row=2, column=0)
+        button_frame.grid(row=2, column=0, sticky='n')
         button_frame.grid_columnconfigure(0, weight=1)
 
-        # Appointment buttons
-        button_width = 25  # Wider buttons for appointment options
+        # Portal buttons
+        button_width = 25
 
-        view__my_appointments_btn = tk.Button(button_frame,
-                                              text="My Appointments",
-                                              width=button_width,
-                                              command=lambda: self.my_appointments_prof(healthcare_id),
-                                              **self.button_style)
-        view__my_appointments_btn.grid(row=1, column=0, pady=5)
+        my_appointments_btn = tk.Button(button_frame,
+                                        text="My Appointments",
+                                        width=button_width,
+                                        command=lambda: self.my_appointments_prof(healthcare_id),
+                                        **self.button_style)
+        my_appointments_btn.grid(row=0, column=0, pady=5)
 
-        view_appointments_btn = tk.Button(button_frame,
-                                          text="Search Appointments",
-                                          width=button_width,
-                                          command=lambda: self.search_appointments(healthcare_id),
-                                          **self.button_style)
-        view_appointments_btn.grid(row=2, column=0, pady=5)
+        search_appointments_btn = tk.Button(button_frame,
+                                            text="Search Appointments",
+                                            width=button_width,
+                                            command=lambda: self.search_appointments(healthcare_id),
+                                            **self.button_style)
+        search_appointments_btn.grid(row=1, column=0, pady=5)
 
         schedule_appointment_btn = tk.Button(button_frame,
                                              text="Schedule New Appointment",
                                              width=button_width,
                                              command=lambda: self.show_schedule_appointment_patient(healthcare_id),
                                              **self.button_style)
-        schedule_appointment_btn.grid(row=3, column=0, pady=5)
+        schedule_appointment_btn.grid(row=2, column=0, pady=5)
 
         # Back button
         back_btn = tk.Button(button_frame,
                              text="Back to Portal",
                              width=button_width,
-                             command=lambda: self.patient_portal(healthcare_id),
+                             command=lambda: self.professional_portal(healthcare_id),  # Changed to professional_portal
                              **self.button_style)
-        back_btn.grid(row=4, column=0, pady=(20, 0))
+        back_btn.grid(row=3, column=0, pady=(20, 0))
 
     # Healthcare Prof's appointments
     def my_appointments_prof(self,healthcare_id):
