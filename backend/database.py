@@ -1,3 +1,6 @@
+import string
+import random
+
 import mysql.connector
 from datetime import datetime, timedelta
 
@@ -48,6 +51,86 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Patient Submission for Patient
+    def submit_appointment(self, visit_type, appointment_date, appointment_time, healthcare_professional_id, notes,
+                           patient_id):
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        try:
+            # Convert the appointment time string to a proper time object
+            appointment_time = datetime.strptime(appointment_time, '%I:%M %p').time()
+
+            # Convert appointment_date to datetime.date if it's not already
+            if isinstance(appointment_date, str):
+                appointment_date = datetime.strptime(appointment_date, '%Y-%m-%d').date()
+
+            # Check if the healthcare professional is available at this time
+            day_of_week = appointment_date.strftime('%A')
+            check_query = """
+            SELECT COUNT(*) 
+            FROM Professional_Availability 
+            WHERE healthcare_professional_id = %s 
+            AND day_of_week = %s 
+            AND start_time <= %s 
+            AND end_time >= %s
+            """
+
+            cursor.execute(check_query, (
+                healthcare_professional_id,
+                day_of_week,
+                appointment_time,
+                appointment_time
+            ))
+
+            if cursor.fetchone()[0] == 0:
+                raise Exception("This healthcare professional is not available at this time.")
+
+            # Check if there's already an appointment at this time
+            check_existing = """
+            SELECT COUNT(*) 
+            FROM Appointment 
+            WHERE healthcare_professional_id = %s 
+            AND appointment_date = %s 
+            AND appointment_time = %s
+            """
+
+            cursor.execute(check_existing, (
+                healthcare_professional_id,
+                appointment_date,
+                appointment_time
+            ))
+
+            if cursor.fetchone()[0] > 0:
+                raise Exception("This time slot is already booked.")
+
+            # Insert the new appointment
+            insert_query = """
+            INSERT INTO Appointment 
+            (patient_id, healthcare_professional_id, appointment_date, appointment_time, 
+             visit_type, appointment_notes) 
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+
+            cursor.execute(insert_query, (
+                patient_id,
+                healthcare_professional_id,
+                appointment_date,
+                appointment_time,
+                visit_type,
+                notes
+            ))
+
+            connection.commit()
+            return True
+
+        except mysql.connector.Error as e:
+            connection.rollback()
+            raise Exception(f"Database error: {str(e)}")
+        finally:
+            cursor.close()
+            connection.close()
+
     # Finds the appointments for a patient
     def get_appointments(self, patient_id):
         connection = self.connect()
@@ -87,7 +170,6 @@ class HealthcareDatabase:
         finally:
             cursor.close()
             connection.close()
-
 
     # Get possible appointment times based on professionals availibility
     def get_available_time_slots(self):
@@ -166,6 +248,47 @@ class HealthcareDatabase:
 
             cursor.execute(query, (day_of_week, time_obj, selected_date, time_obj))
             return cursor.fetchall()
+        finally:
+            cursor.close()
+            connection.close()
+
+    def add_new_patient(self, first_name, last_name, birth_date, gender, phone, zipcode, ssn, allergies):
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        try:
+            # Get max ID and increment
+            cursor.execute("SELECT MAX(patient_id) FROM Patient")
+            result = cursor.fetchone()[0]
+            patient_id = 10001 if result is None else int(result) + 1
+
+            # Generate password
+            password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+
+            # Insert new patient
+            query = """
+                INSERT INTO Patient 
+                (patient_id, first_name, last_name, birth_date, gender,
+                 phone_number, zip_code, ssn, allergies, patient_password)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+
+            cursor.execute(query, (
+                patient_id,
+                first_name,
+                last_name,
+                birth_date,
+                gender,
+                phone,
+                zipcode,
+                ssn,
+                allergies,
+                password
+            ))
+
+            connection.commit()
+            return patient_id, password
+
         finally:
             cursor.close()
             connection.close()

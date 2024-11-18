@@ -265,6 +265,13 @@ class HealthcareGUI:
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
+        # Centers elements
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+
+
         # Logo
         self._add_logo(main_frame)
 
@@ -296,6 +303,50 @@ class HealthcareGUI:
                       command=command,
                       **self.button_style).grid(row=i, column=0, pady=5)
 
+    # Patient view for appointment page
+    def appointments_patient(self, patient_id):
+        self.clear_window()
+
+        # Main frame
+        main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
+        main_frame.grid(row=0, column=0, sticky='nsew')
+
+        # Centers elements
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+
+        # Logo
+        self._add_logo(main_frame)
+
+        # Title frame
+        ttk.Label(main_frame,
+                  text="My Appointments",
+                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
+
+        # Button Frame
+        button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
+        button_frame.grid(row=2, column=0, sticky='n')
+        button_frame.grid_columnconfigure(0, weight=1)
+
+        button_width = 25
+
+        # Buttons
+        buttons = [
+            ("View my Upcoming Appointments", lambda: self.view_appointment_patient(patient_id)),
+            ("Schedule New Appointment", lambda: self.schedule_appointment_patient(patient_id)),
+            ("Back to Portal", lambda: self.patient_portal(patient_id))
+        ]
+
+        for i, (text, command) in enumerate(buttons):
+            tk.Button(button_frame,
+                      text=text,
+                      width=button_width,
+                      command=command,
+                      **self.button_style).grid(row=i, column=0, pady=5)
+
+    # Patient view for upcoming appointments / cancelling appointments
     def view_appointment_patient(self, patient_id):
         self.clear_window()
 
@@ -322,9 +373,9 @@ class HealthcareGUI:
             'ID': {'width': 0, 'stretch': False},
             'Date': {'width': 80, 'minwidth': 80},
             'Time': {'width': 80, 'minwidth': 80},
-            'Type': {'width': 120, 'minwidth': 100},
-            'Doctor': {'width': 160, 'minwidth': 140},
-            'Notes': {'width': 180, 'minwidth': 140}
+            'Type': {'width': 100, 'minwidth': 100},
+            'Doctor': {'width': 100, 'minwidth': 140},
+            'Notes': {'width': 160, 'minwidth': 140}
         }
 
         for col, props in columns.items():
@@ -390,48 +441,7 @@ class HealthcareGUI:
                       text="No upcoming appointments found.",
                       style='Custom.TLabel').grid(row=1, column=0, pady=20)
 
-    def appointments_patient(self, patient_id):
-        self.clear_window()
-
-        # Main frame
-        main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
-        main_frame.grid(row=0, column=0, sticky='nsew')
-
-        # Centers elements
-        self.root.grid_rowconfigure(0, weight=1)
-        self.root.grid_columnconfigure(0, weight=1)
-        main_frame.grid_rowconfigure(2, weight=1)
-        main_frame.grid_columnconfigure(0, weight=1)
-
-        # Logo
-        self._add_logo(main_frame)
-
-        # Title frame
-        ttk.Label(main_frame,
-                  text="My Appointments",
-                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
-
-        # Button Frame
-        button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
-        button_frame.grid(row=2, column=0, sticky='n')
-        button_frame.grid_columnconfigure(0, weight=1)
-
-        button_width = 25
-
-        # Buttons
-        buttons = [
-            ("View my Upcoming Appointments", lambda: self.view_appointment_patient(patient_id)),
-            ("Schedule New Appointment", lambda: self.schedule_appointment_patient(patient_id)),
-            ("Back to Portal", lambda: self.patient_portal(patient_id))
-        ]
-
-        for i, (text, command) in enumerate(buttons):
-            tk.Button(button_frame,
-                      text=text,
-                      width=button_width,
-                      command=command,
-                      **self.button_style).grid(row=i, column=0, pady=5)
-
+    # Patient view for scheduling appointments
     def schedule_appointment_patient(self, patient_id):
         self.clear_window()
 
@@ -447,59 +457,85 @@ class HealthcareGUI:
                                     padding="20", style='Login.TLabelframe')
         form_frame.grid(row=1, column=0, padx=20, pady=20, sticky=(tk.W, tk.E))
 
+        # Place holders for data entry
+        def add_placeholder_to_text(text_widget, placeholder):
+            text_widget.insert('1.0', placeholder)
+            text_widget.config(foreground='gray')
+
+            def on_focus_in(event):
+                if text_widget.get('1.0', 'end-1c') == placeholder:
+                    text_widget.delete('1.0', tk.END)
+                    text_widget.config(foreground='black')
+
+            def on_focus_out(event):
+                if not text_widget.get('1.0', 'end-1c'):
+                    text_widget.insert('1.0', placeholder)
+                    text_widget.config(foreground='gray')
+
+            text_widget.bind('<FocusIn>', on_focus_in)
+            text_widget.bind('<FocusOut>', on_focus_out)
+
         # Appointment Type Selection
         ttk.Label(form_frame, text="Appointment Type:").grid(row=0, column=0, pady=5, sticky='w')
-        appointment_types = ['Regular Checkup', 'Follow-up', 'Consultation', 'Vaccination']
+        appointment_types = [
+            'Regular Checkup - General health examination',
+            'Follow-up - Review previous visit',
+            'Consultation - Specific health concern',
+            'Vaccination - Immunization services'
+        ]
         type_var = tk.StringVar()
-        type_dropdown = ttk.Combobox(form_frame, textvariable=type_var, values=appointment_types, width=30)
+        type_dropdown = ttk.Combobox(form_frame, textvariable=type_var, values=appointment_types, width=40)
         type_dropdown.grid(row=0, column=1, pady=5)
-        type_dropdown.set("Select Type")
+        type_dropdown.set("Select Type of Appointment")
 
-        # Date Selection
+        # Date Selection with date picker and info
         ttk.Label(form_frame, text="Select Date:").grid(row=1, column=0, pady=5, sticky='w')
         current_date = datetime.now()
         min_date = current_date
         max_date = current_date + timedelta(days=365)
 
         date_cal = DateEntry(form_frame,
-                             width=30,
+                             width=37,
                              background='darkblue',
                              foreground='white',
                              borderwidth=2,
                              date_pattern='mm/dd/yyyy',
                              mindate=min_date,
-                             maxdate=max_date)
+                             maxdate=max_date,
+                             state='readonly')
         date_cal.grid(row=1, column=1, pady=5)
         date_cal.set_date(current_date)
+        ttk.Label(form_frame,
+                  text="(You can schedule up to one year in advance)",
+                  font=('Helvetica', 8, 'italic'),
+                  foreground='gray').grid(row=1, column=2, pady=5, padx=5, sticky='w')
 
-        # Time Selection
+        # Time Selection with formatted display
         ttk.Label(form_frame, text="Select Time:").grid(row=2, column=0, pady=5, sticky='w')
         time_slots = self.db.get_available_time_slots()
-
         time_var = tk.StringVar()
         time_dropdown = ttk.Combobox(
             form_frame,
             textvariable=time_var,
             values=time_slots,
-            width=30,
-            height=20
+            width=37,
+            state='readonly'
         )
         time_dropdown.grid(row=2, column=1, pady=5)
-        time_dropdown.set("Select Time")
+        time_dropdown.set("Select Available Time Slot")
 
-        # Doctor Selection
-        ttk.Label(form_frame, text="Select Doctor:").grid(row=3, column=0, pady=5, sticky='w')
+        # Healthcare Professional Selection
+        ttk.Label(form_frame, text="Select Healthcare Provider:").grid(row=3, column=0, pady=5, sticky='w')
         doctor_var = tk.StringVar()
-        doctor_dropdown = ttk.Combobox(form_frame, textvariable=doctor_var, width=30)
+        doctor_dropdown = ttk.Combobox(form_frame, textvariable=doctor_var, width=37, state='readonly')
         doctor_dropdown.grid(row=3, column=1, pady=5)
-        doctor_dropdown.set("Select Time and Date First")
+        doctor_dropdown.set("First select date and time")
 
-        # Find available doctors for date and time selection
         def update_available_doctors(*args):
             selected_date = date_cal.get_date()
             selected_time = time_var.get()
 
-            if selected_time == "Select Time":
+            if selected_time == "Select Available Time Slot":
                 return
 
             available_doctors = self.db.get_available_doctors(selected_date, selected_time)
@@ -515,45 +551,53 @@ class HealthcareGUI:
         time_dropdown.bind('<<ComboboxSelected>>', update_available_doctors)
         date_cal.bind('<<DateEntrySelected>>', update_available_doctors)
 
-        # Notes/Comments entry form
+        # Notes/Comments entry form with placeholder
         ttk.Label(form_frame, text="Additional Notes:").grid(row=4, column=0, pady=5, sticky='w')
-        notes_text = tk.Text(form_frame, height=3, width=30)
+        notes_text = tk.Text(form_frame, height=3, width=40)
         notes_text.grid(row=4, column=1, pady=5)
+        add_placeholder_to_text(notes_text, "Enter any special requests or relevant information for your appointment")
 
-        # Validate appointment submission
         def validate_and_submit():
-            selected_date = date_cal.get_date()
+            # Get notes, handling placeholder text
+            notes = notes_text.get("1.0", tk.END).strip()
+            if notes == "Enter any special requests or relevant information for your appointment":
+                notes = ""
 
-            if (type_var.get() == "Select Type" or
-                    time_var.get() == "Select Time" or
-                    doctor_var.get() == "Select Time and Date First" or
+            # Validate selections
+            if (type_var.get() == "Select Type of Appointment" or
+                    time_var.get() == "Select Available Time Slot" or
+                    doctor_var.get() == "First select date and time" or
                     doctor_var.get() == "Select Healthcare Professional"):
-                messagebox.showerror("Error", "Please fill in all fields")
+                messagebox.showerror("Error", "Please fill in all required fields")
                 return
 
-            selected_doctor = doctor_var.get()
-            healthcare_professional_id = self.doctor_map[selected_doctor]
+            try:
+                selected_doctor = doctor_var.get()
+                healthcare_professional_id = self.doctor_map[selected_doctor]
 
-            success = self.db.submit_appointment(
-                type_var.get(),
-                selected_date,
-                time_var.get(),
-                healthcare_professional_id,
-                notes_text.get("1.0", tk.END).strip(),
-                patient_id
-            )
+                success = self.db.submit_appointment(
+                    type_var.get().split(' - ')[0],  # Get just the appointment type without description
+                    date_cal.get_date().strftime('%Y-%m-%d'),
+                    time_var.get(),
+                    healthcare_professional_id,
+                    notes,
+                    patient_id
+                )
 
-            if success:
-                messagebox.showinfo("Success", "Appointment scheduled successfully!")
-                self.view_appointment_patient(patient_id)
+                if success:
+                    messagebox.showinfo("Success", "Appointment scheduled successfully!")
+                    self.view_appointment_patient(patient_id)
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to schedule appointment: {str(e)}")
 
         # Button frame
         button_frame = ttk.Frame(form_frame, style='Custom.TFrame')
-        button_frame.grid(row=5, column=0, columnspan=2, pady=20)
+        button_frame.grid(row=5, column=0, columnspan=3, pady=20)
 
-        # Buttons
+        # Add buttons
         tk.Button(button_frame,
-                  text="Submit",
+                  text="Schedule Appointment",
                   command=validate_and_submit,
                   **self.button_style).grid(row=0, column=0, padx=10)
 
@@ -562,6 +606,7 @@ class HealthcareGUI:
                   command=lambda: self.appointments_patient(patient_id),
                   **self.button_style).grid(row=0, column=1, padx=10)
 
+    # Patient view for viewing and paying their bills
     def bills_patient(self, patient_id):
         # Placeholder for billing functionality
         self.clear_window()
@@ -574,6 +619,7 @@ class HealthcareGUI:
                   command=lambda: self.patient_portal(patient_id),
                   **self.button_style).grid(row=2, column=0, pady=20)
 
+    # Patient view for viewing their medication
     def medications_patient(self):
         # Placeholder for medications functionality
         self.clear_window()
@@ -585,6 +631,170 @@ class HealthcareGUI:
                   text="Back",
                   command=self.selection_screen,
                   **self.button_style).grid(row=2, column=0, pady=20)
+
+    # Professional view for appointment side
+    def appointments_professional(self, healthcare_id):
+        self.clear_window()
+
+    # Allows professionals to add patients
+    def add_patient(self,healthcare_id):
+        self.clear_window()
+
+        # Main frame
+        main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
+        main_frame.grid(row=0, column=0, sticky='nsew')
+
+        # Centers elements
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        main_frame.grid_rowconfigure(2, weight=1)
+        main_frame.grid_columnconfigure(0, weight=1)
+
+        # Logo
+        self._add_logo(main_frame)
+
+        # Title
+        ttk.Label(main_frame,
+                  text="Add New Patient",
+                  font=('Verdana', 20, 'bold')).grid(row=1, column=0, pady=(0, 30))
+
+        # Form frame
+        form_frame = ttk.Frame(main_frame, style='Custom.TFrame')
+        form_frame.grid(row=2, column=0, sticky='n')
+        form_frame.grid_columnconfigure(0, weight=1)
+
+        # Entry fields
+        first_name = ttk.Entry(form_frame, width=30)
+        last_name = ttk.Entry(form_frame, width=30)
+        birth_date = ttk.Entry(form_frame, width=30)
+        gender = ttk.Combobox(form_frame, values=['Male', 'Female', 'Other'], width=27)
+        phone = ttk.Entry(form_frame, width=30)
+        zip_code = ttk.Entry(form_frame, width=30)
+        ssn = ttk.Entry(form_frame, width=30)
+        allergies = ttk.Entry(form_frame, width=30)
+
+        # Layout
+        ttk.Label(form_frame, text="First Name:").grid(row=0, column=0, pady=5, sticky='e', padx=5)
+        first_name.grid(row=0, column=1, pady=5)
+
+        ttk.Label(form_frame, text="Last Name:").grid(row=1, column=0, pady=5, sticky='e', padx=5)
+        last_name.grid(row=1, column=1, pady=5)
+
+        ttk.Label(form_frame, text="Birth Date:").grid(row=2, column=0, pady=5, sticky='e', padx=5)
+        birth_date.grid(row=2, column=1, pady=5)
+
+        ttk.Label(form_frame, text="Gender:").grid(row=3, column=0, pady=5, sticky='e', padx=5)
+        gender.grid(row=3, column=1, pady=5)
+        gender.set("Select Gender")
+
+        ttk.Label(form_frame, text="Phone:").grid(row=4, column=0, pady=5, sticky='e', padx=5)
+        phone.grid(row=4, column=1, pady=5)
+
+        ttk.Label(form_frame, text="Zip Code:").grid(row=5, column=0, pady=5, sticky='e', padx=5)
+        zip_code.grid(row=5, column=1, pady=5)
+
+        ttk.Label(form_frame, text="SSN:").grid(row=6, column=0, pady=5, sticky='e', padx=5)
+        ssn.grid(row=6, column=1, pady=5)
+
+        ttk.Label(form_frame, text="Allergies:").grid(row=7, column=0, pady=5, sticky='e', padx=5)
+        allergies.grid(row=7, column=1, pady=5)
+
+        # Add placeholders
+        def add_placeholder(entry, placeholder):
+            entry.insert(0, placeholder)
+            entry.config(foreground='gray')
+
+            def on_focus_in(event):
+                if entry.get() == placeholder:
+                    entry.delete(0, tk.END)
+                    entry.config(foreground='black')
+
+            def on_focus_out(event):
+                if not entry.get():
+                    entry.insert(0, placeholder)
+                    entry.config(foreground='gray')
+
+            entry.bind('<FocusIn>', on_focus_in)
+            entry.bind('<FocusOut>', on_focus_out)
+
+        # Add placeholders to fields
+        add_placeholder(first_name, "Enter first name")
+        add_placeholder(last_name, "Enter last name")
+        add_placeholder(birth_date, "YYYY-MM-DD")
+        add_placeholder(phone, "XXX-XXX-XXXX")
+        add_placeholder(zip_code, "XXXXX")
+        add_placeholder(ssn, "XXX-XX-XXXX")
+        add_placeholder(allergies, "Enter allergies or None")
+
+        def validate_and_submit():
+            # Get values and remove placeholders
+            fn = first_name.get()
+            ln = last_name.get()
+            bd = birth_date.get()
+            gen = gender.get()
+            ph = phone.get()
+            zc = zip_code.get()
+            ss = ssn.get()
+            alg = allergies.get()
+
+            # Remove placeholder text if present
+            if fn == "Enter first name": fn = ""
+            if ln == "Enter last name": ln = ""
+            if bd == "YYYY-MM-DD": bd = ""
+            if ph == "XXX-XXX-XXXX": ph = ""
+            if zc == "XXXXX": zc = ""
+            if ss == "XXX-XX-XXXX": ss = ""
+            if alg == "Enter allergies or None": alg = ""
+
+            # Validate required fields
+            if not all([fn, ln, bd, ph, zc, ss]):
+                messagebox.showerror("Error", "Please fill in all required fields")
+                return
+
+            if gen == "Select Gender":
+                messagebox.showerror("Error", "Please select a gender")
+                return
+
+            try:
+                # Try to create new patient
+                patient_id, password = self.db.add_new_patient(
+                    fn, ln, bd, gen, ph, zc, ss, alg or 'None'
+                )
+
+                # Show success message with credentials
+                messagebox.showinfo(
+                    "Success",
+                    f"Patient added successfully!\n\n"
+                    f"Patient ID: {patient_id}\n"
+                    f"Password: {password}\n\n"
+                    "Please provide these credentials to the patient."
+                )
+
+                self.professional_portal(healthcare_id)
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to add patient: {str(e)}")
+
+        # Button frame
+        button_frame = ttk.Frame(form_frame, style='Custom.TFrame')
+        button_frame.grid(row=8, column=0, columnspan=2, pady=20)
+
+        tk.Button(button_frame,
+                  text="Submit",
+                  command=validate_and_submit,
+                  **self.button_style).grid(row=0, column=0, padx=10)
+
+        tk.Button(button_frame,
+                  text="Back",
+                  command=lambda: self.professional_portal(healthcare_id),
+                  **self.button_style).grid(row=0, column=1, padx=10)
+
+    def search_patient(self,healthcare_id):
+        self.clear_window()
+
+    # Allows professionals to view billing
+    def billing_professional(self,healthcare_id):
+        self.clear_window()
 
 
 if __name__ == "__main__":
