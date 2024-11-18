@@ -18,7 +18,7 @@ def master_login():
 def find_record():
     selection = dropdown_var.get()
     record_id = id_entry.get()
-    output_text.delete("1.0", tk.END)  # Clear previous output
+    output_text.delete("1.0", tk.END) 
 
     # Initialize query with a default value of None
     query = None
