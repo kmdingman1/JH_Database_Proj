@@ -159,7 +159,7 @@ class HealthcareDatabase:
             connection.close()
 
     # Updates appointment table when appointment is cancelled
-    def cancel_appointment(self, appointment_id):
+    def delete_appointment(self, appointment_id):
         connection = self.connect()
         cursor = connection.cursor()
         try:
@@ -252,6 +252,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # allows professionals to add new patients
     def add_new_patient(self, first_name, last_name, birth_date, gender, phone, zipcode, ssn, allergies):
         connection = self.connect()
         cursor = connection.cursor()
@@ -288,6 +289,224 @@ class HealthcareDatabase:
 
             connection.commit()
             return patient_id, password
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    # retrieves a professionals appointments
+    def get_professional_appointments(self, healthcare_id):
+        connection = self.connect()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            query = """
+            SELECT 
+                a.appointment_id,
+                a.appointment_date,
+                TIME_FORMAT(a.appointment_time, '%h:%i %p') as appointment_time,
+                a.visit_type,
+                a.appointment_notes,
+                p.first_name,
+                p.last_name,
+                p.patient_id
+            FROM Appointment a
+            JOIN Patient p ON a.patient_id = p.patient_id
+            WHERE a.healthcare_professional_id = %s
+            AND a.appointment_date >= CURDATE()
+            ORDER BY a.appointment_date, a.appointment_time;
+            """
+
+            cursor.execute(query, (healthcare_id,))
+            return cursor.fetchall()
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    # Get appointment details for professional view
+    def get_appointment_details(self, appointment_id):
+        connection = self.connect()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            query = """
+            SELECT 
+                a.*,
+                p.first_name,
+                p.last_name,
+                p.allergies,
+                p.patient_id
+            FROM Appointment a
+            JOIN Patient p ON a.patient_id = p.patient_id
+            WHERE a.appointment_id = %s
+            """
+
+            cursor.execute(query, (appointment_id,))
+            return cursor.fetchone()
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    def get_patient_info(self, patient_id):
+        connection = self.connect()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            query = """
+            SELECT * FROM Patient 
+            WHERE patient_id = %s
+            """
+            cursor.execute(query, (patient_id,))
+            return cursor.fetchone()
+        finally:
+            cursor.close()
+            connection.close()
+
+    def get_medications(self, patient_id):
+        connection = self.connect()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            query = """
+            SELECT medication_name, dosage, side_effects, start_date, end_date
+            FROM medication 
+            WHERE patient_id = %s
+            """
+            cursor.execute(query, (patient_id,))
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+            connection.close()
+
+    def get_medical_history(self, patient_id):
+        connection = self.connect()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            query = """
+            SELECT treatment_date, diagnosis, notes 
+            FROM medical_history 
+            WHERE patient_id = %s 
+            ORDER BY treatment_date DESC
+            """
+            cursor.execute(query, (patient_id,))
+            return cursor.fetchall()
+        finally:
+            cursor.close()
+            connection.close()
+
+    def process_payment(self, bill_id, amount):
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        try:
+            query = """
+            UPDATE bill 
+            SET status = 'Paid', 
+                payment_date = CURDATE() 
+            WHERE bill_id = %s
+            """
+            cursor.execute(query, (bill_id,))
+            connection.commit()
+        finally:
+            cursor.close()
+            connection.close()
+
+    # Allows professional to add medical history during an appointment
+    def add_medical_history(self, patient_id, healthcare_id, diagnosis, notes, treatment_date=None):
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        try:
+            if treatment_date is None:
+                treatment_date = datetime.now().date()
+
+            query = """
+            INSERT INTO medical_history 
+            (patient_id, healthcare_professional_id, treatment_date, diagnosis, notes)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+
+            cursor.execute(query, (
+                patient_id,
+                healthcare_id,
+                treatment_date,
+                diagnosis if diagnosis else None,  # Allow NULL diagnosis
+                notes
+            ))
+
+            history_id = cursor.lastrowid
+            connection.commit()
+            return history_id
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    # Allows professional to prescribe a medication
+    def add_medication(self, patient_id, medication_name, dosage=None, side_effects=None):
+        connection = self.connect()
+        cursor = connection.cursor()
+
+        try:
+            query = """
+            INSERT INTO medication 
+            (patient_id, medication_name, dosage, side_effects)
+            VALUES (%s, %s, %s, %s)
+            """
+
+            cursor.execute(query, (
+                patient_id,
+                medication_name,
+                dosage,
+                side_effects
+            ))
+
+            connection.commit()
+
+        finally:
+            cursor.close()
+            connection.close()
+
+    # Allows professional to generate billing
+    def create_bill(self, patient_id, appointment_id, amount):
+        connection = self.connect()
+        cursor = connection.cursor(dictionary=True)
+
+        try:
+            # First get the appointment date
+            query = """
+                SELECT appointment_date 
+                FROM Appointment 
+                WHERE appointment_id = %s
+                """
+            cursor.execute(query, (appointment_id,))
+            appointment = cursor.fetchone()
+
+            # Calculate due date as one year from appointment date
+            appointment_date = appointment['appointment_date']
+            due_date = appointment_date + timedelta(days=365)
+
+            # Insert bill
+            insert_query = """
+                INSERT INTO bill 
+                (patient_id, appointment_id, amount, date_issued, due_date, status)
+                VALUES (%s, %s, %s, CURDATE(), %s, %s)
+                """
+
+            cursor.execute(insert_query, (
+                patient_id,
+                appointment_id,
+                amount,
+                due_date,
+                'Unpaid'
+            ))
+
+            bill_id = cursor.lastrowid
+            connection.commit()
+            return bill_id
 
         finally:
             cursor.close()
