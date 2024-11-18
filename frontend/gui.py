@@ -356,7 +356,7 @@ class HealthcareGUI:
 
         # Main frame
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
-        main_frame.grid(row=0, column=0, sticky='nsew')  # Add main_frame to root
+        main_frame.grid(row=0, column=0, sticky='nsew') 
         main_frame.grid_columnconfigure(0, weight=1)
         main_frame.grid_rowconfigure(1, weight=1)
 
@@ -582,7 +582,7 @@ class HealthcareGUI:
                 healthcare_professional_id = self.doctor_map[selected_doctor]
 
                 success = self.db.submit_appointment(
-                    type_var.get().split(' - ')[0],  # Get just the appointment type without description
+                    type_var.get().split(' - ')[0], 
                     date_cal.get_date().strftime('%Y-%m-%d'),
                     time_var.get(),
                     healthcare_professional_id,
@@ -638,7 +638,6 @@ class HealthcareGUI:
         bills_frame.grid(row=2, column=0, sticky='nsew', padx=20, pady=5)
         bills_frame.grid_columnconfigure(0, weight=1)
 
-        # Create Treeview with styling
         style = ttk.Style()
         style.configure("Treeview", font=('Verdana', 11), rowheight=25)
         style.configure("Treeview.Heading", font=('Verdana', 11, 'bold'))
@@ -955,7 +954,7 @@ class HealthcareGUI:
             tk.Button(button_frame,
                       text=text,
                       command=command,
-                      width=width,  # Individual widths for each button
+                      width=width, 
                       **self.button_style).grid(row=0, column=i, padx=10)
 
         # No appointments message
@@ -963,8 +962,8 @@ class HealthcareGUI:
             ttk.Label(appointments_frame,
                       text="No upcoming appointments found.",
                       style='Custom.TLabel').grid(row=1, column=0, pady=20)
-
-        # Filter frame (optional enhancement)
+            
+        # Filter frame
         filter_frame = ttk.LabelFrame(main_frame, text="Filter by Date", padding="10", style='Login.TLabelframe')
         filter_frame.grid(row=4, column=0, sticky='ew', padx=20, pady=10)
 
