@@ -1321,7 +1321,6 @@ class HealthcareGUI:
     def billing_professional(self,healthcare_id):
         self.clear_window()
 
-
 if __name__ == "__main__":
     root = tk.Tk()
     app = HealthcareGUI(root)

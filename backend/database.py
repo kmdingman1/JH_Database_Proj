@@ -349,6 +349,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Retrieve patient info
     def get_patient_info(self, patient_id):
         connection = self.connect()
         cursor = connection.cursor(dictionary=True)
@@ -364,6 +365,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Retrieve patient medications
     def get_medications(self, patient_id):
         connection = self.connect()
         cursor = connection.cursor(dictionary=True)
@@ -380,6 +382,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # retrieve patient medical history
     def get_medical_history(self, patient_id):
         connection = self.connect()
         cursor = connection.cursor(dictionary=True)
@@ -397,6 +400,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Process patient payments
     def process_payment(self, bill_id, amount):
         connection = self.connect()
         cursor = connection.cursor()
