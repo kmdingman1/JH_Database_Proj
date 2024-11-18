@@ -11,12 +11,14 @@ class HealthcareDatabase:
             "database": "hopkins_health_hub"
         }
 
+    # Database connection
     def connect(self):
         try:
             return mysql.connector.connect(**self.db_config)
         except mysql.connector.Error as e:
             raise Exception(f"Could not connect to database: {e}")
 
+    # Login verification for patient
     def verify_patient_login(self, patient_id, password):
         connection = self.connect()
         cursor = connection.cursor()
@@ -31,6 +33,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Log in verification for professional
     def verify_professional_login(self, healthcare_id, password):
         connection = self.connect()
         cursor = connection.cursor()
@@ -45,6 +48,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Finds the appointments for a patient
     def get_appointments(self, patient_id):
         connection = self.connect()
         cursor = connection.cursor(dictionary=True)
@@ -71,6 +75,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Updates appointment table when appointment is cancelled
     def cancel_appointment(self, appointment_id):
         connection = self.connect()
         cursor = connection.cursor()
@@ -83,6 +88,8 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+
+    # Get possible appointment times based on professionals availibility
     def get_available_time_slots(self):
         connection = self.connect()
         cursor = connection.cursor()
@@ -122,6 +129,7 @@ class HealthcareDatabase:
             cursor.close()
             connection.close()
 
+    # Find health care professionals available at specific date and time
     def get_available_doctors(self, selected_date, selected_time):
         connection = self.connect()
         cursor = connection.cursor(dictionary=True)
