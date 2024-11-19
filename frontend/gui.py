@@ -287,7 +287,7 @@ class HealthcareGUI:
 
         button_width = 25
 
-        # Professional Portal Buttons
+        # Portal Buttons
         buttons = [
             ("View or Schedule Appointment", lambda: self.appointments_professional(healthcare_id)),
             ("Add new Patient", lambda: self.add_patient(healthcare_id)),
@@ -311,7 +311,7 @@ class HealthcareGUI:
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
-        # Centers elements
+        # Center frame elements
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         main_frame.grid_rowconfigure(2, weight=1)
@@ -380,7 +380,7 @@ class HealthcareGUI:
             'Notes': {'width': 160, 'stretch': True}
         }
 
-        # Create Treeview for appointments
+        # Treeeview for appointments
         tree = ttk.Treeview(appointments_frame, columns=list(columns.keys()), show='headings')
         for column_name, settings in columns.items():
             tree.heading(column_name, text=column_name)
@@ -393,7 +393,7 @@ class HealthcareGUI:
         x_scrollbar = ttk.Scrollbar(appointments_frame, orient="horizontal", command=tree.xview)
         tree.configure(yscrollcommand=y_scrollbar.set, xscrollcommand=x_scrollbar.set)
 
-        # Grid layout for tree and scrollbars
+        # Layout for tree & scroll bars
         tree.grid(row=0, column=0, sticky='nsew')
         y_scrollbar.grid(row=0, column=1, sticky='ns')
         x_scrollbar.grid(row=1, column=0, sticky='ew')
@@ -431,7 +431,7 @@ class HealthcareGUI:
         button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
         button_frame.grid(row=2, column=0, pady=20)
 
-        # Buttons
+        # Appointment buttons
         buttons = [
             ("Schedule New Appointment", lambda: self.schedule_appointment_patient(patient_id)),
             ("Cancel Selected", cancel_selected_appointment),
@@ -498,7 +498,7 @@ class HealthcareGUI:
         type_dropdown.grid(row=0, column=1, pady=5)
         type_dropdown.set("Select Type of Appointment")
 
-        # Date Selection with date picker and info
+        # Date Selection
         ttk.Label(form_frame, text="Select Date:").grid(row=1, column=0, pady=5, sticky='w')
         current_date = datetime.now()
         min_date = current_date
@@ -516,7 +516,7 @@ class HealthcareGUI:
         date_cal.grid(row=1, column=1, pady=5)
         date_cal.set_date(current_date)
 
-        # Time Selection with formatted display
+        # Time Selection
         ttk.Label(form_frame, text="Select Time:").grid(row=2, column=0, pady=5, sticky='w')
         time_slots = self.db.get_available_time_slots()
         time_var = tk.StringVar()
@@ -557,14 +557,14 @@ class HealthcareGUI:
         time_dropdown.bind('<<ComboboxSelected>>', update_available_doctors)
         date_cal.bind('<<DateEntrySelected>>', update_available_doctors)
 
-        # Notes/Comments entry form with placeholder
+        # Notes/Comments entry field w/ placeholder
         ttk.Label(form_frame, text="Additional Notes:").grid(row=4, column=0, pady=5, sticky='w')
         notes_text = tk.Text(form_frame, height=3, width=40)
         notes_text.grid(row=4, column=1, pady=5)
         add_placeholder_to_text(notes_text, "Enter any concerns or conditions you may have")
 
         def validate_and_submit():
-            # Get notes, handling placeholder text
+            # Get notes
             notes = notes_text.get("1.0", tk.END).strip()
             if notes == "Enter any concerns or conditions you may have":
                 notes = ""
@@ -651,7 +651,7 @@ class HealthcareGUI:
             width = 150 if col in ['Service Date', 'Date Issued', 'Due Date'] else 120
             tree.column(col, width=width)
 
-        # Add scrollbars
+        # Scroll bars
         y_scrollbar = ttk.Scrollbar(bills_frame, orient="vertical", command=tree.yview)
         x_scrollbar = ttk.Scrollbar(bills_frame, orient="horizontal", command=tree.xview)
         tree.configure(yscrollcommand=y_scrollbar.set, xscrollcommand=x_scrollbar.set)
@@ -758,17 +758,10 @@ class HealthcareGUI:
                   **self.button_style).grid(row=0, column=2, padx=10)
 
     # Patient view for viewing their medication
+    # Incomplete
     def medications_patient(self):
-        # Placeholder for medications functionality
         self.clear_window()
-        main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
-        main_frame.grid(row=0, column=0, sticky='nsew')
-        self._add_logo(main_frame)
-        ttk.Label(main_frame, text="Medications functionality coming soon!").grid(row=1, column=0, pady=20)
-        tk.Button(main_frame,
-                  text="Back",
-                  command=self.selection_screen,
-                  **self.button_style).grid(row=2, column=0, pady=20)
+       
 
     # Professional view for appointment side
     def appointments_professional(self, healthcare_id):
@@ -862,7 +855,7 @@ class HealthcareGUI:
             tree.heading(col, text=settings['text'], anchor='w')
             tree.column(col, width=settings['width'], stretch=settings['stretch'])
 
-        # Add scrollbar
+        #Scrollbar
         scrollbar = ttk.Scrollbar(appointments_frame, orient="vertical", command=tree.yview)
         tree.configure(yscrollcommand=scrollbar.set)
 
@@ -887,6 +880,7 @@ class HealthcareGUI:
             messagebox.showerror("Error", f"Failed to load appointments: {str(e)}")
             appointments = []
 
+        # Professional view to start appointment encounter
         def start_encounter():
             selected = tree.selection()
             if not selected:
@@ -896,7 +890,7 @@ class HealthcareGUI:
             appointment_id = tree.item(selected[0])['values'][0]
 
             try:
-                # Verify appointment exists and get details
+                # Verify appointment exists, get details
                 appointment = self.db.get_appointment_details(appointment_id)
                 if appointment:
                     self.create_encounter(healthcare_id, appointment_id)
@@ -938,7 +932,7 @@ class HealthcareGUI:
         button_frame = ttk.Frame(main_frame, style='Custom.TFrame')
         button_frame.grid(row=3, column=0, pady=20)
 
-        # Add buttons
+        # Button
         buttons = [
             ("Start Encounter", start_encounter),
             ("Back", lambda: self.professional_portal(healthcare_id))
@@ -976,9 +970,9 @@ class HealthcareGUI:
                                 borderwidth=2)
         date_filter.grid(row=0, column=1, padx=5)
 
+        # Filter appointment by date
         def apply_filters():
             selected_date = date_filter.get_date()
-            # Clear tree
             for item in tree.get_children():
                 tree.delete(item)
 
@@ -1021,7 +1015,7 @@ class HealthcareGUI:
         main_frame = ttk.Frame(self.root, padding="20", style='Custom.TFrame')
         main_frame.grid(row=0, column=0, sticky='nsew')
 
-        # Centers elements
+        # Centers frame element
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         main_frame.grid_rowconfigure(2, weight=1)
@@ -1032,18 +1026,18 @@ class HealthcareGUI:
         ttk.Label(main_frame, text="Appointment Notes", font=('Verdana', 20, 'bold')).grid(row=1, column=0,
                                                                                            pady=(0, 20))
 
-        # Get data
+        # Get appointment & patient data
         appointment = self.db.get_appointment_details(appointment_id)
         patient_info = self.db.get_patient_info(appointment['patient_id'])
         medical_history = self.db.get_medical_history(appointment['patient_id'])
         prescriptions = self.db.get_patient_prescriptions(appointment['patient_id'])
 
-        # Calculate age
+        # Calculate patient age
         birth_date = patient_info['birth_date']
         today = datetime.now()
         age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
 
-        # Patient & Appointment Information Frame
+        # Patient & Appointment info Frame
         info_frame = ttk.LabelFrame(main_frame, text="Patient & Appointment Information", padding="10",
                                     style='Login.TLabelframe')
         info_frame.grid(row=2, column=0, sticky='ew', padx=20, pady=5)
@@ -1066,12 +1060,12 @@ class HealthcareGUI:
             ttk.Label(info_frame, text=value, font=('Verdana', 11), wraplength=900).grid(row=i, column=1, sticky='w',
                                                                                          padx=5, pady=2)
 
-        # Current Prescriptions Frame
+        # Prescriptions Frame
         med_frame = ttk.LabelFrame(main_frame, text="Current Prescriptions", padding="10", style='Login.TLabelframe')
         med_frame.grid(row=4, column=0, sticky='ew', padx=20, pady=5)
         med_frame.grid_columnconfigure(0, weight=1)
 
-        # Create Treeview
+        # Treeview for prescriptions
         med_tree = ttk.Treeview(med_frame, columns=('Medication', 'Dosage', 'Start Date', 'End Date', 'Side Effects'),
                                 show='headings', height=3)
 
@@ -1082,14 +1076,14 @@ class HealthcareGUI:
         med_tree.column('End Date', width=100, minwidth=100)
         med_tree.column('Side Effects', width=300, minwidth=200)
 
-        # Set column headings
+        # Column headings
         med_tree.heading('Medication', text='Medication')
         med_tree.heading('Dosage', text='Dosage')
         med_tree.heading('Start Date', text='Start Date')
         med_tree.heading('End Date', text='End Date')
         med_tree.heading('Side Effects', text='Side Effects')
 
-        # Add scrollbars
+        # Scollbar
         med_y_scrollbar = ttk.Scrollbar(med_frame, orient="vertical", command=med_tree.yview)
         med_x_scrollbar = ttk.Scrollbar(med_frame, orient="horizontal", command=med_tree.xview)
         med_tree.configure(yscrollcommand=med_y_scrollbar.set, xscrollcommand=med_x_scrollbar.set)
@@ -1114,7 +1108,7 @@ class HealthcareGUI:
         history_frame.grid(row=5, column=0, sticky='ew', padx=20, pady=5)
         history_frame.grid_columnconfigure(0, weight=1)
 
-        # Create History Treeview
+        # Treeview for medical history
         history_tree = ttk.Treeview(history_frame, columns=('Date', 'Diagnosis', 'Notes'), show='headings', height=5)
 
         # Configure history columns
@@ -1122,12 +1116,12 @@ class HealthcareGUI:
         history_tree.column('Diagnosis', width=200, minwidth=150)
         history_tree.column('Notes', width=300, minwidth=200)
 
-        # Set history headings
+        # Medical History headings
         history_tree.heading('Date', text='Date')
         history_tree.heading('Diagnosis', text='Diagnosis')
         history_tree.heading('Notes', text='Notes')
 
-        # Add history scrollbars
+        # scrollbars
         history_y_scrollbar = ttk.Scrollbar(history_frame, orient="vertical", command=history_tree.yview)
         history_x_scrollbar = ttk.Scrollbar(history_frame, orient="horizontal", command=history_tree.xview)
         history_tree.configure(yscrollcommand=history_y_scrollbar.set, xscrollcommand=history_x_scrollbar.set)
@@ -1159,6 +1153,7 @@ class HealthcareGUI:
         notes = tk.Text(encounter_frame, height=4, width=80, font=('Verdana', 11))
         notes.grid(row=3, column=0, sticky='ew', padx=5, pady=2)
 
+        # Submit encounter notes/ diagnosis for an encounter
         def submit():
             if not notes.get("1.0", "end-1c").strip() and not diagnosis.get().strip():
                 messagebox.showwarning("Warning", "Please enter either notes or a diagnosis")
@@ -1237,7 +1232,7 @@ class HealthcareGUI:
         medication_names = {med['medication_name']: {'id': med['medication_id'], 'cost': med['cost']} for med in
                             medications}
 
-        # Left side - Medication info
+        # Medication info
         med_info_frame = ttk.Frame(med_frame, style='Custom.TFrame')
         med_info_frame.grid(row=0, column=0, padx=5)
 
@@ -1255,7 +1250,7 @@ class HealthcareGUI:
         med_cost_label = ttk.Label(med_info_frame, text="$0.00", font=('Verdana', 11))
         med_cost_label.grid(row=2, column=1, sticky='w', pady=5)
 
-        # Right side - Dates
+        # Medication start and end dates
         med_dates_frame = ttk.Frame(med_frame, style='Custom.TFrame')
         med_dates_frame.grid(row=0, column=1, padx=5)
 
@@ -1281,6 +1276,7 @@ class HealthcareGUI:
                              font=('Verdana', 11))
         end_date.grid(row=1, column=1, sticky='w', pady=5)
 
+        # Add medication cost to appointment cost
         def calculate_total_cost():
             visit_amount = float(amount_entry.get() or 0)
             med_cost = 0
@@ -1308,7 +1304,7 @@ class HealthcareGUI:
         med_name.bind('<<ComboboxSelected>>', update_cost)
         amount_entry.bind('<KeyRelease>', update_cost)
 
-        # Payment frame (initially hidden)
+        # Payment frame
         payment_frame = ttk.LabelFrame(main_frame, text="Payment Details", padding="10", style='Login.TLabelframe')
         payment_frame.grid(row=4, column=0, sticky='ew', padx=10, pady=5)
         payment_frame.grid_remove()
@@ -1327,6 +1323,7 @@ class HealthcareGUI:
             payment_entry.delete(0, tk.END)
             payment_entry.insert(0, f"{total:.2f}")
 
+        # Process payment for encounter
         def process_payment():
             try:
                 total_amount = calculate_total_cost()
@@ -1360,6 +1357,7 @@ class HealthcareGUI:
             except ValueError:
                 messagebox.showerror("Error", "Please enter valid payment amount")
 
+        # Svae encounter data to DB
         def save_encounter_data():
             if encounter_data['notes'].strip() or encounter_data.get('diagnosis'):
                 self.db.add_medical_history(
@@ -1379,6 +1377,7 @@ class HealthcareGUI:
                     encounter_data['healthcare_id']
                 )
 
+        # If not paying for visit after encounter
         def submit_without_payment():
             try:
                 total_amount = calculate_total_cost()
@@ -1421,10 +1420,12 @@ class HealthcareGUI:
                   **self.button_style).grid(row=0, column=3, padx=10)
 
     # Professional side view of appointments
+    # Incomplete
     def search_appointments_professional(self,healthcare_id):
         self.clear_window()
 
     # Professional Side view to schedule appointments
+    #Incomplete
     def schedule_appointments_professional(self, healthcare_id):
         self.clear_window()
 
@@ -1581,10 +1582,13 @@ class HealthcareGUI:
                   command=lambda: self.professional_portal(healthcare_id),
                   **self.button_style).grid(row=0, column=1, padx=10)
 
+    # Allow healthcare professionals to search patients in the DB
+    # Incomplete
     def search_patient(self,healthcare_id):
         self.clear_window()
 
     # Allows professionals to view billing
+    # Incomplete
     def billing_professional(self,healthcare_id):
         self.clear_window()
 
