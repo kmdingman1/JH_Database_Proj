@@ -22,9 +22,9 @@ class HealthcareDatabase:
             "database": "hopkins_health_hub"
         }
 
+    # Manager for DB connections
     @contextmanager
     def get_cursor(self, dictionary: bool = False):
-        """Context manager for database connections"""
         connection = mysql.connector.connect(**self.db_config)
         cursor = connection.cursor(dictionary=dictionary)
         try:
@@ -336,6 +336,7 @@ class HealthcareDatabase:
         return self.execute_query(query, (day_of_week, time_obj, selected_date, time_obj), dictionary=True)
 
     # Patient Management Methods
+    
     # Add a new patient into the system
     def add_new_patient(self, first_name: str, last_name: str, birth_date: str,
                         gender: str, phone: str, zipcode: str, ssn: str,
@@ -430,6 +431,7 @@ class HealthcareDatabase:
         ))
 
     # Billing Methods
+    
     # Create bill
     def create_bill(self, patient_id: str, appointment_id: int, amount: float) -> int:
         with self.get_cursor(dictionary=True) as cursor:
@@ -445,7 +447,7 @@ class HealthcareDatabase:
                 if not appointment:
                     raise DatabaseError("Appointment not found")
 
-                # Calculate due date as one year from appointment date
+                # Calculate bill due date as one year from appointment date
                 due_date = appointment['appointment_date'] + timedelta(days=365)
 
                 # Insert bill
@@ -464,11 +466,11 @@ class HealthcareDatabase:
                 ))
 
                 bill_id = cursor.lastrowid
-                print(f"Created bill with ID: {bill_id}")  # Debug print
+                print(f"Created bill with ID: {bill_id}")
                 return bill_id
 
             except Exception as e:
-                print(f"Error creating bill: {str(e)}")  # Debug print
+                print(f"Error creating bill: {str(e)}")
                 raise DatabaseError(f"Failed to create bill: {str(e)}")
 
     # Get patient bills
@@ -560,7 +562,7 @@ class HealthcareDatabase:
                 # If paid in full, delete the bill
                 cursor.execute("DELETE FROM bill WHERE bill_id = %s", (bill_id,))
             else:
-                # If partial payment, update amount but keep status as Unpaid
+                # If partial payment, update amount but keep status as unpaid
                 cursor.execute("""
                     UPDATE bill 
                     SET amount = %s, 
