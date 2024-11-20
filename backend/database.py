@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import string
 import random
 import mysql.connector
@@ -8,9 +8,7 @@ from decimal import Decimal
 
 
 class DatabaseError(Exception):
-    """Custom exception for database errors"""
     pass
-
 
 class HealthcareDatabase:
 
@@ -139,40 +137,14 @@ class HealthcareDatabase:
         ))
         return True
 
-    # Get appointments for patients or professionals
-    def get_appointments_by_type(self, id_value: str, user_type: str) -> List[Dict]:
-        base_query = """
-            SELECT 
-                a.appointment_id,
-                a.appointment_date,
-                TIME_FORMAT(a.appointment_time, '%I:%i %p') as appointment_time,
-                a.visit_type,
-                a.appointment_notes
+    # Set appointments to completed once finished encounter
+    def mark_appointment_completed(self, appointment_id: int) -> bool:
+        query = """
+            UPDATE Appointment 
+            SET encounter_completed = TRUE 
+            WHERE appointment_id = %s
         """
-
-        if user_type == 'patient':
-            query = base_query + """
-                , CONCAT(h.first_name, ' ', h.last_name) as doctor_name
-                , h.healthcare_professional_id
-                FROM Appointment a
-                JOIN Healthcare_Professional h ON a.healthcare_professional_id = h.healthcare_professional_id
-                WHERE a.patient_id = %s
-                AND (a.appointment_date > CURDATE() 
-                     OR (a.appointment_date = CURDATE() AND a.appointment_time >= CURTIME()))
-                ORDER BY a.appointment_date, a.appointment_time
-            """
-        else:
-            query = base_query + """
-                , CONCAT(p.first_name, ' ', p.last_name) as patient_name
-                , p.patient_id
-                FROM Appointment a
-                JOIN Patient p ON a.patient_id = p.patient_id
-                WHERE a.healthcare_professional_id = %s
-                AND a.appointment_date >= CURDATE()
-                ORDER BY a.appointment_date, a.appointment_time
-            """
-
-        return self.execute_query(query, (id_value,), dictionary=True)
+        return bool(self.execute_update(query, (appointment_id,)))
 
     # Retrieve Patient Appointments
     def get_appointments(self, patient_id: str) -> List[Dict]:
@@ -190,9 +162,9 @@ class HealthcareDatabase:
             JOIN Healthcare_Professional h ON a.healthcare_professional_id = h.healthcare_professional_id
             WHERE a.patient_id = %s
             AND (a.appointment_date >= CURDATE())
+            AND a.encounter_completed = FALSE
             ORDER BY a.appointment_date, a.appointment_time
             """
-
             cursor.execute(query, (patient_id,))
             appointments = cursor.fetchall()
 
@@ -201,7 +173,6 @@ class HealthcareDatabase:
                 if isinstance(appt['appointment_date'], datetime):
                     appt['appointment_date'] = appt['appointment_date'].date()
                 if not isinstance(appt['appointment_time'], str):
-                    # Convert 24-hour time to 12-hour format
                     time_obj = datetime.strptime(str(appt['appointment_time']), '%H:%M:%S').time()
                     appt['appointment_time'] = time_obj.strftime('%I:%M %p')
 
@@ -224,13 +195,12 @@ class HealthcareDatabase:
             JOIN Patient p ON a.patient_id = p.patient_id
             WHERE a.healthcare_professional_id = %s
             AND a.appointment_date >= CURDATE()
+            AND a.encounter_completed = FALSE
             ORDER BY a.appointment_date, a.appointment_time
             """
-
             cursor.execute(query, (healthcare_id,))
             appointments = cursor.fetchall()
 
-            # Format the appointments to ensure consistent field names
             formatted_appointments = []
             for appt in appointments:
                 formatted_appt = {
@@ -415,7 +385,7 @@ class HealthcareDatabase:
         """
         return self.execute_query(query, (patient_id,), dictionary=True)
 
-    # Add presciption method
+    # Add prescription method
     def add_prescription(self, patient_id: str, medication_id: int, dosage: str,
                          start_date: datetime.date, end_date: datetime.date,
                          healthcare_id: str) -> int:
@@ -429,7 +399,6 @@ class HealthcareDatabase:
             start_date, end_date, healthcare_id
         ))
 
-    # Billing Methods
     # Create bill
     def create_bill(self, patient_id: str, appointment_id: int, amount: float) -> int:
         with self.get_cursor(dictionary=True) as cursor:
@@ -490,58 +459,6 @@ class HealthcareDatabase:
             cursor.execute(query, (patient_id,))
             return cursor.fetchall()
 
-    # Get bill details
-    def get_bill_details(self, bill_id: int) -> Dict:
-        query = """
-            SELECT 
-                b.*,
-                a.appointment_date,
-                a.appointment_time,
-                a.visit_type,
-                CONCAT(p.first_name, ' ', p.last_name) as patient_name,
-                CONCAT(h.first_name, ' ', h.last_name) as doctor_name
-            FROM bill b
-            JOIN Appointment a ON b.appointment_id = a.appointment_id
-            JOIN Patient p ON b.patient_id = p.patient_id
-            JOIN Healthcare_Professional h ON a.healthcare_professional_id = h.healthcare_professional_id
-            WHERE b.bill_id = %s
-        """
-
-        results = self.execute_query(query, (bill_id,), dictionary=True)
-        if not results:
-            raise DatabaseError(f"Bill with ID {bill_id} not found")
-
-        bill = results[0]
-        # Format decimal values and dates
-        bill['amount'] = float(bill['amount'])
-        bill['date_issued'] = bill['date_issued'].strftime('%m/%d/%Y')
-        bill['due_date'] = bill['due_date'].strftime('%m/%d/%Y')
-        bill['appointment_date'] = bill['appointment_date'].strftime('%m/%d/%Y')
-        bill['appointment_time'] = bill['appointment_time'].strftime('%I:%M %p')
-
-        return bill
-
-    # Get summary of billing history
-    def get_billing_summary(self, patient_id: str) -> Dict:
-        query = """
-            SELECT 
-                SUM(CASE WHEN status != 'Paid' THEN amount ELSE 0 END) as outstanding_balance,
-                SUM(CASE WHEN status = 'Paid' THEN amount ELSE 0 END) as total_paid,
-                SUM(amount) as total_billed,
-                COUNT(CASE WHEN status != 'Paid' AND due_date < CURDATE() THEN 1 END) as overdue_bills
-            FROM bill
-            WHERE patient_id = %s
-        """
-
-        results = self.execute_query(query, (patient_id,), dictionary=True)
-        summary = results[0]
-
-        # Format decimal values
-        for key in ['outstanding_balance', 'total_paid', 'total_billed']:
-            summary[key] = float(summary[key] if summary[key] is not None else 0)
-
-        return summary
-
     # Proces payment for a bill
     def process_payment(self, bill_id: int, payment_amount: float) -> Dict:
         with self.get_cursor(dictionary=True) as cursor:
@@ -567,3 +484,133 @@ class HealthcareDatabase:
                         status = 'Unpaid'
                     WHERE bill_id = %s
                 """, (new_amount, bill_id))
+
+    # Search for patients by ID or name
+    def search_patients(self, patient_id: str = None, first_name: str = None, last_name: str = None) -> List[Dict]:
+        with self.get_cursor(dictionary=True) as cursor:
+            if patient_id:
+                query = """
+                    SELECT * FROM Patient 
+                    WHERE patient_id = %s
+                """
+                cursor.execute(query, (patient_id,))
+            else:
+                query = """
+                    SELECT * FROM Patient 
+                    WHERE first_name LIKE %s 
+                    AND last_name LIKE %s
+                """
+                cursor.execute(query, (f"%{first_name}%", f"%{last_name}%"))
+
+            return cursor.fetchall()
+
+    # Cancel patient prescriptions
+    def cancel_prescription(self, patient_id: str, medication_id: int) -> None:
+        with self.get_cursor() as cursor:
+            query = "DELETE FROM prescription WHERE patient_id = %s AND medication_id = %s"
+            cursor.execute(query, (patient_id, medication_id))
+
+    # Get time slots available for specific professional
+    def get_professional_available_slots(self, healthcare_id: str, selected_date: datetime.date) -> List[str]:
+        with self.get_cursor(dictionary=True) as cursor:
+            # Get the professional's availability for the day of week
+            day_of_week = selected_date.strftime('%A')
+
+            query = """
+                SELECT start_time, end_time 
+                FROM Professional_Availability 
+                WHERE healthcare_professional_id = %s 
+                AND day_of_week = %s
+            """
+            cursor.execute(query, (healthcare_id, day_of_week))
+            availability = cursor.fetchall()
+
+            if not availability:
+                return []
+
+            # Get existing appointments for that date
+            query = """
+                SELECT appointment_time 
+                FROM Appointment 
+                WHERE healthcare_professional_id = %s 
+                AND appointment_date = %s
+            """
+            cursor.execute(query, (healthcare_id, selected_date))
+            booked_times = {appt['appointment_time'] for appt in cursor.fetchall()}
+
+            # Generate available 30-minute slots
+            available_slots = []
+            for slot in availability:
+                start_time = slot['start_time']
+                end_time = slot['end_time']
+
+                if isinstance(start_time, timedelta):
+                    start_minutes = start_time.seconds // 60
+                    end_minutes = end_time.seconds // 60
+                else:
+                    start_minutes = (start_time.hour * 60) + start_time.minute
+                    end_minutes = (end_time.hour * 60) + end_time.minute
+
+                current_minutes = start_minutes
+                while current_minutes < end_minutes:
+                    hours = current_minutes // 60
+                    minutes = current_minutes % 60
+                    current_time = time(hours, minutes)
+
+                    if current_time not in booked_times:
+                        period = 'AM' if hours < 12 else 'PM'
+                        display_hour = hours if hours <= 12 else hours - 12
+                        if display_hour == 0:
+                            display_hour = 12
+                        time_slot = f"{display_hour}:{minutes:02d} {period}"
+                        available_slots.append(time_slot)
+
+                    current_minutes += 30
+
+            return sorted(available_slots, key=lambda x: datetime.strptime(x, '%I:%M %p'))
+
+    # Search appointments by criteria
+    def search_appointments(self, prof_id=None, prof_fname=None, prof_lname=None,
+                            patient_id=None, patient_fname=None, patient_lname=None) -> List[Dict]:
+        with self.get_cursor(dictionary=True) as cursor:
+            query = """
+                SELECT 
+                    a.appointment_id,
+                    a.appointment_date,
+                    TIME_FORMAT(a.appointment_time, '%h:%i %p') as appointment_time,
+                    a.visit_type,
+                    a.appointment_notes,
+                    hp.first_name as professional_first_name,
+                    hp.last_name as professional_last_name,
+                    p.first_name as patient_first_name,
+                    p.last_name as patient_last_name
+                FROM Appointment a
+                JOIN Healthcare_Professional hp ON a.healthcare_professional_id = hp.healthcare_professional_id
+                JOIN Patient p ON a.patient_id = p.patient_id
+                WHERE a.encounter_completed = FALSE
+            """
+            params = []
+
+            if prof_id:
+                query += " AND hp.healthcare_professional_id = %s"
+                params.append(prof_id)
+            if prof_fname:
+                query += " AND hp.first_name LIKE %s"
+                params.append(f"%{prof_fname}%")
+            if prof_lname:
+                query += " AND hp.last_name LIKE %s"
+                params.append(f"%{prof_lname}%")
+            if patient_id:
+                query += " AND p.patient_id = %s"
+                params.append(patient_id)
+            if patient_fname:
+                query += " AND p.first_name LIKE %s"
+                params.append(f"%{patient_fname}%")
+            if patient_lname:
+                query += " AND p.last_name LIKE %s"
+                params.append(f"%{patient_lname}%")
+
+            query += " ORDER BY a.appointment_date, a.appointment_time"
+
+            cursor.execute(query, tuple(params))
+            return cursor.fetchall()
