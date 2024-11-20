@@ -22,7 +22,6 @@ class HealthcareDatabase:
 
     @contextmanager
     def get_cursor(self, dictionary: bool = False):
-        """Context manager for database connections"""
         connection = mysql.connector.connect(**self.db_config)
         cursor = connection.cursor(dictionary=dictionary)
         try:
@@ -77,7 +76,7 @@ class HealthcareDatabase:
         return self.verify_login(patient_id, password, 'patient')
 
     def verify_professional_login(self, healthcare_id: str, password: str) -> bool:
-        """Verify healthcare professional login credentials"""
+
         return self.verify_login(healthcare_id, password, 'professional')
 
     # Check that professional is available

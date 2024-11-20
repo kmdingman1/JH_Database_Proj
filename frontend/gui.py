@@ -2372,7 +2372,7 @@ class HealthcareGUI:
         time_dropdown.bind('<<ComboboxSelected>>', update_available_doctors)
         date_cal.bind('<<DateEntrySelected>>', update_available_doctors)
 
-        # Notes/comments entry
+        # Notes/ comments entry
         ttk.Label(form_frame, text="Additional Notes:").grid(row=4, column=0, pady=5, sticky='w')
         notes_text = tk.Text(form_frame, height=3, width=40)
         notes_text.grid(row=4, column=1, pady=5)
