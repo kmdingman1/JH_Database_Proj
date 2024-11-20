@@ -3,8 +3,7 @@ from datetime import datetime, timedelta, time
 import string
 import random
 import mysql.connector
-from typing import Optional, Dict, List, Any, Union, Tuple
-from decimal import Decimal
+from typing import Optional, Dict, List, Union, Tuple
 
 
 class DatabaseError(Exception):
